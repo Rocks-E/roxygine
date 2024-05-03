@@ -77,3 +77,31 @@ void render_init_quad(u32 *vao, u32 *vbo, u32 *ebo) {
 	glBindVertexArray(0);
 	
 }
+
+void render_init_shaders(render_state_internal_t *state) {
+	
+	state->shader_default = render_shader_create("./shaders/default.vert", "./shaders/default.frag");
+	
+	mat4x4_ortho(state->projection, 0, global.render.width, 0, global.render.height, -2, 2);
+	
+	glUseProgram(state->shader_default);
+	glUniformMatrix4fv(glGetUniformLocation(state->shader_default, "projection"), 1, GL_FALSE, &state->projection[0][0]);
+	
+}
+
+void render_init_color_texture(u32 *texture) {
+
+	glGenTextures(1, texture);
+	glBindTexture(GL_TEXTURE_2D, *texture);
+	
+	u8 solid_white[4] = {0xFF, 0xFF, 0xFF, 0xFF};
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, solid_white);
+	
+	glBindTexture(GL_TEXTURE_2D, 0);
+	
+}
+
+
+
+
+
