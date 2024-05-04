@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#define ERROR_EXIT(e, ...) fprintf(stderr, __VA_ARGS__); exit(e)
-#define ERROR_RETURN(r, ...) fprintf(stderr, __VA_ARGS__); return r
+#define ERROR_EXIT(e, ...) { fprintf(stderr, __VA_ARGS__); exit(e); }
+#define ERROR_RETURN(r, ...) { fprintf(stderr, __VA_ARGS__); return r; }
 
 #endif

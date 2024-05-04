@@ -17,9 +17,8 @@ file_t io_file_read(const char *file_path) {
 	file_t file = {.is_valid = 0};
 	
 	FILE *file_ptr = fopen(file_path, "rb");
-	if(ferror(file_ptr)) {
+	if(!file_ptr || ferror(file_ptr))
 		ERROR_RETURN(file, IO_READ_ERROR_GENERAL, file_path, errno);
-	}
 	
 	char *data = NULL, *tmp;
 	size_t used = 0, size = 0, n;
@@ -106,5 +105,15 @@ file_t io_file_read(const char *file_path) {
 }
 
 s32 io_file_write(void *buffer, size_t length, const char *file_path) {
-	return 1;
+
+	FILE *file_ptr = fopen(file_path, "wb");
+	if(!file_ptr || ferror(file_ptr))
+		ERROR_RETURN(1, "Cannot write file: %s\n", file_path);
+	
+	size_t chunks_written = fwrite(buffer, size, 1, file_path);
+	
 }
+
+
+
+
