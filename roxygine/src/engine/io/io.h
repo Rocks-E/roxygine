@@ -14,6 +14,6 @@ typedef struct file_d {
 } file_t;
 
 file_t io_file_read(const char *file_path);
-s32 io_file_write(void *buffer, size_t length, const char *file_path);
+s32 io_file_write(const void *buffer, size_t length, const char *file_path);
 
 #endif

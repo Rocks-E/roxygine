@@ -104,13 +104,20 @@ file_t io_file_read(const char *file_path) {
 	
 }
 
-s32 io_file_write(void *buffer, size_t length, const char *file_path) {
+s32 io_file_write(const void *buffer, size_t length, const char *file_path) {
 
 	FILE *file_ptr = fopen(file_path, "wb");
 	if(!file_ptr || ferror(file_ptr))
 		ERROR_RETURN(1, "Cannot write file: %s\n", file_path);
 	
-	size_t chunks_written = fwrite(buffer, size, 1, file_path);
+	size_t chunks_written = fwrite(buffer, length, 1, file_ptr);
+	
+	fclose(file_ptr);
+	
+	if(chunks_written != 1)
+		ERROR_RETURN(1, "Write error - expected 1 chunk, got %zu\n", chunks_written);
+	
+	return 0;
 	
 }
 
