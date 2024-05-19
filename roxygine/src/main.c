@@ -11,6 +11,7 @@
 #include "engine/time/time.h"
 #include "engine/render/render.h"
 #include "engine/render/render_internal.h"
+#include "engine/data_structures/array_list.h"
 
 static char running = 1;
 static vec2 pos;
