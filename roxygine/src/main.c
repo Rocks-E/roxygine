@@ -11,7 +11,7 @@
 #include "engine/time/time.h"
 #include "engine/render/render.h"
 #include "engine/render/render_internal.h"
-#include "engine/data_structures/array_list.h"
+#include "engine/physics/physics.h"
 
 static char running = 1;
 static vec2 pos;
@@ -32,6 +32,22 @@ int32_t main(int32_t argc, char **argv) {
 	time_init(60);
 	config_init();
 	render_init();
+	physics_init();
+	
+	size_t body_count = 100;
+	
+	for(size_t c = 0; c < body_count; c++) {
+		
+		size_t body_index = physics_body_create(
+			(vec2){rand() % (s32)global.render.width, rand() % (s32)global.render.height},
+			(vec2){rand() % 100, rand() % 100}
+		);
+		
+		body_t *body_cursor = physics_body_get(body_index);
+		body_cursor->velocity[0] = rand() % 200 - 100;
+		body_cursor->velocity[1] = rand() % 200 - 100;
+		
+	}
 	
 	pos[0] = global.render.width * 0.5;
 	pos[1] = global.render.height * 0.5;
@@ -59,6 +75,7 @@ int32_t main(int32_t argc, char **argv) {
 		
 		input_update();
 		input_handle();
+		physics_update();
 		
 		render_begin();
 	
@@ -67,8 +84,30 @@ int32_t main(int32_t argc, char **argv) {
 					(vec2){50, 50},
 					(vec4){1, 0, 1, 1}
 					);
-					
-		render_end();
+		
+		for(size_t c = 0; c < body_count; c++) {
+			
+			body_t *body_cursor = physics_body_get(c);
+			render_quad(body_cursor->aabb.position, body_cursor->aabb.half_size, (vec4){0, 1, 0, 1});
+			
+			
+			if(body_cursor->aabb.position[0] > global.render.width || body_cursor->aabb.position[0] < 0)
+				body_cursor->velocity[0] = -body_cursor->velocity[0];
+			if(body_cursor->aabb.position[1] > global.render.height || body_cursor->aabb.position[1] < 0)
+				body_cursor->velocity[1] = -body_cursor->velocity[1];
+		
+			if(body_cursor->velocity[0] > 500)
+				body_cursor->velocity[0] = 500;
+			if(body_cursor->velocity[0] < -500)
+				body_cursor->velocity[0] = -500;
+			if(body_cursor->velocity[1] > 500)
+				body_cursor->velocity[1] = 500;
+			if(body_cursor->velocity[1] < -500)
+				body_cursor->velocity[1] = -500;
+			
+		}
+		
+		render_end();		
 		time_update_late();
 		
 	}

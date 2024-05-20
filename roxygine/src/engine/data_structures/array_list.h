@@ -20,4 +20,6 @@ void *array_list_get(array_list_t *array, size_t position);
 u8 array_list_remove(array_list_t *array, size_t position);
 u8 array_list_pop(array_list_t *array);
 
+char *array_list_to_string(array_list_t *array);
+
 #endif

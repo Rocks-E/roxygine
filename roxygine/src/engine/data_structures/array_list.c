@@ -45,7 +45,7 @@ u8 array_list_resize(array_list_t *array, size_t new_size) {
 	else if(new_size > array->capacity) {
 		
 		array->capacity = new_size;
-		void *new_data = realloc(array->data, new_size * new_size);
+		void *new_data = realloc(array->data, array->element_size * new_size);
 		
 		// If realloc failed, return 1
 		if(!new_data)
@@ -86,7 +86,7 @@ size_t array_list_insert(array_list_t *array, size_t position, void *element) {
 	
 	// If we are already at capacity, double the capacity
 	if(array->length == array->capacity)
-		if(array_list_resize(array, (array->capacity > 0 ? array->capacity << 1 : 1)))
+		if(array_list_resize(array, (array->capacity > 0 ? array->capacity * 2 : 1)))
 			return -1;
 	
 	if(position > array->length)
@@ -107,7 +107,7 @@ size_t array_list_insert(array_list_t *array, size_t position, void *element) {
 }
 
 size_t array_list_push(array_list_t *array, void *element) {
-	return array_list_insert(array, array->length + 1, element);
+	return array_list_insert(array, array->length, element);
 }
 
 void *array_list_get(array_list_t *array, size_t position) {
@@ -141,5 +141,15 @@ u8 array_list_pop(array_list_t *array) {
 		ERROR_RETURN(1, "Array list is empty\n");
 	
 	return 0;
+	
+}
+
+char *array_list_to_string(array_list_t *array) {
+	
+	char *buffer = (char *)calloc(60, sizeof(char));
+	
+	sprintf(buffer, "Elem size: %zu, length: %zu, capacity: %zu", array->element_size, array->length, array->capacity);
+	
+	return buffer;
 	
 }
