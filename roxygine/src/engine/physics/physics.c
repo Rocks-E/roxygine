@@ -66,3 +66,62 @@ u8 physics_point_intersect_aabb(vec2 point, aabb_t aabb) {
 	return (point[0] >= min[0] && point[0] <= max[0]) && (point[1] >= min[1] && point[1] <= max[1]);
 	
 }
+
+aabb_t aabb_minkowski_difference(aabb_t a, aabb_t b) {
+	
+	aabb_t result;
+	
+	vec2_sub(result.position, a.position, b.position);
+	vec2_add(result.half_size, a.half_size, b.half_size);
+	
+	return result;
+	
+}
+
+u8 physics_aabb_intersect_aabb(aabb_t a, aabb_t b) {
+	
+	aabb_t minkowski_difference = aabb_minkowski_difference(a, b);
+	
+	return physics_point_intersect_aabb((vec2){0, 0}, minkowski_difference);
+	
+}
+
+void aabb_penetration_vector(vec2 r, aabb_t aabb) {
+	
+	vec2 min, max;
+	aabb_min_max(min, max, aabb);
+	
+	f32 minimum_distance = fabsf(min[0]);
+	r[0] = min[0];
+	r[1] = 0;
+
+	f32 test_distance = fabsf(max[0]);
+	
+	if(test_distance < minimum_distance) {
+		
+		minimum_distance = test_distance;
+		r[0] = max[0];
+		
+	}
+	
+	test_distance = fabsf(min[1]);
+	
+	if(test_distance < minimum_distance) {
+		
+		minimum_distance = test_distance;
+		r[0] = 0;
+		r[1] = min[1];
+		
+	}
+	
+	test_distance = fabsf(max[1]);
+	
+	if(test_distance < minimum_distance) {
+		
+		minimum_distance = test_distance;
+		r[0] = 0;
+		r[1] = max[1];
+		
+	}
+	
+}
