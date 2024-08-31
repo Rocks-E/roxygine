@@ -1,6 +1,7 @@
 #ifndef RG_PHYSICS_H
 #define RG_PHYSICS_H
 
+#include <linmath.h>
 #include "../types.h"
 
 typedef struct aabb_d {
@@ -18,5 +19,6 @@ void physics_init(void);
 void physics_update(void);
 size_t physics_body_create(vec2 position, vec2 size);
 body_t *physics_body_get(size_t index);
+u8 physics_point_intersect_aabb(vec2 point, aabb_t aabb);
 
 #endif

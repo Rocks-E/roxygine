@@ -89,6 +89,22 @@ void render_init_shaders(render_state_internal_t *state) {
 	
 }
 
+void render_init_line(u32 *vao, u32 *vbo) {
+	
+	glGenVertexArrays(1, vao);
+	glBindVertexArray(*vao);
+	
+	glGenBuffers(1, vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, *vbo);
+	glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(f32), NULL, GL_DYNAMIC_DRAW);
+	
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(f32), NULL);
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	
+}
+
 void render_init_color_texture(u32 *texture) {
 
 	glGenTextures(1, texture);

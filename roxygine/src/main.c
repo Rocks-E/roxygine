@@ -17,14 +17,13 @@ static char running = 1;
 static vec2 pos;
 
 static void input_handle(void) {
-	if(global.input.left == KEY_STATE_PRESSED || global.input.left == KEY_STATE_HELD)
-		pos[0] -= 500 * global.time.delta;
-	if(global.input.right == KEY_STATE_PRESSED || global.input.right == KEY_STATE_HELD)
-		pos[0] += 500 * global.time.delta;
-	if(global.input.up == KEY_STATE_PRESSED || global.input.up == KEY_STATE_HELD)
-		pos[1] += 500 * global.time.delta;
-	if(global.input.down == KEY_STATE_PRESSED || global.input.down == KEY_STATE_HELD)
-		pos[1] -= 500 * global.time.delta;
+	
+	s32 x, y;
+	SDL_GetMouseState(&x, &y);
+	
+	pos[0] = (f32)x;
+	pos[1] = global.render.height - y;
+	
 }
 
 int32_t main(int32_t argc, char **argv) {
@@ -34,23 +33,15 @@ int32_t main(int32_t argc, char **argv) {
 	render_init();
 	physics_init();
 	
-	size_t body_count = 100;
-	
-	for(size_t c = 0; c < body_count; c++) {
-		
-		size_t body_index = physics_body_create(
-			(vec2){rand() % (s32)global.render.width, rand() % (s32)global.render.height},
-			(vec2){rand() % 100, rand() % 100}
-		);
-		
-		body_t *body_cursor = physics_body_get(body_index);
-		body_cursor->velocity[0] = rand() % 200 - 100;
-		body_cursor->velocity[1] = rand() % 200 - 100;
-		
-	}
+	SDL_ShowCursor(0);
 	
 	pos[0] = global.render.width * 0.5;
 	pos[1] = global.render.height * 0.5;
+	
+	aabb_t test_aabb = {
+		.position = {global.render.width * 0.5, global.render.height * 0.5},
+		.half_size = {50, 50}
+	};
 	
 	while(running) {
 		
@@ -79,33 +70,16 @@ int32_t main(int32_t argc, char **argv) {
 		
 		render_begin();
 	
+		/*
 		render_quad(
 					pos,
 					(vec2){50, 50},
 					(vec4){1, 0, 1, 1}
 					);
+		*/
 		
-		for(size_t c = 0; c < body_count; c++) {
-			
-			body_t *body_cursor = physics_body_get(c);
-			render_quad(body_cursor->aabb.position, body_cursor->aabb.half_size, (vec4){0, 1, 0, 1});
-			
-			
-			if(body_cursor->aabb.position[0] > global.render.width || body_cursor->aabb.position[0] < 0)
-				body_cursor->velocity[0] = -body_cursor->velocity[0];
-			if(body_cursor->aabb.position[1] > global.render.height || body_cursor->aabb.position[1] < 0)
-				body_cursor->velocity[1] = -body_cursor->velocity[1];
-		
-			if(body_cursor->velocity[0] > 500)
-				body_cursor->velocity[0] = 500;
-			if(body_cursor->velocity[0] < -500)
-				body_cursor->velocity[0] = -500;
-			if(body_cursor->velocity[1] > 500)
-				body_cursor->velocity[1] = 500;
-			if(body_cursor->velocity[1] < -500)
-				body_cursor->velocity[1] = -500;
-			
-		}
+		render_aabb((f32 *)&test_aabb, (vec4){1, 1, 1, 0.5});
+		render_quad(pos, (vec2){5, 5}, (physics_point_intersect_aabb(pos, test_aabb) ? RED : WHITE));
 		
 		render_end();		
 		time_update_late();

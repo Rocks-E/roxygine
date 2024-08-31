@@ -1,4 +1,3 @@
-#include <linmath.h>
 #include "../global.h"
 #include "../util.h"
 #include "physics.h"
@@ -50,4 +49,20 @@ size_t physics_body_create(vec2 position, vec2 size) {
 
 body_t *physics_body_get(size_t index) {
 	return array_list_get(phys_state.body_list, index);
+}
+
+void aabb_min_max(vec2 min, vec2 max, aabb_t aabb) {
+	
+	vec2_sub(min, aabb.position, aabb.half_size);
+	vec2_add(max, aabb.position, aabb.half_size);
+	
+}
+
+u8 physics_point_intersect_aabb(vec2 point, aabb_t aabb) {
+	
+	vec2 min, max;
+	aabb_min_max(min, max, aabb);
+	
+	return (point[0] >= min[0] && point[0] <= max[0]) && (point[1] >= min[1] && point[1] <= max[1]);
+	
 }
