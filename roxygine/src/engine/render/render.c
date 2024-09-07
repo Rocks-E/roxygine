@@ -8,8 +8,8 @@ static render_state_internal_t state = {0};
 
 void render_init(void) {
 	
-	global.render.width = 800;
-	global.render.height = 600;
+	global.render.width = 1920;
+	global.render.height = 1080;
 	
 	global.render.window = render_init_window(global.render.width, global.render.height);
 	

@@ -14,15 +14,25 @@
 #include "engine/physics/physics.h"
 
 static char running = 1;
-static vec2 pos;
 
-static void input_handle(void) {
+static void input_handle(body_t *body_player) {
 	
-	s32 x, y;
-	SDL_GetMouseState(&x, &y);
+	if(global.input.start)
+		running = 0;
 	
-	pos[0] = (f32)x;
-	pos[1] = global.render.height - y;
+	f32 vx = 0;
+	f32 vy = body_player->velocity[1];
+	
+	if(global.input.right)
+		vx += 1000;
+	if(global.input.left)
+		vx -= 1000;
+	
+	if(global.input.up)
+		vy = 4000;
+	
+	body_player->velocity[0] = vx;
+	body_player->velocity[1] = vy;
 	
 }
 
@@ -35,16 +45,16 @@ int32_t main(int32_t argc, char **argv) {
 	
 	SDL_ShowCursor(0);
 	
-	pos[0] = global.render.width * 0.5;
-	pos[1] = global.render.height * 0.5;
+	u32 body_id = physics_body_create((vec2){100, 800}, (vec2){50, 50});
 	
-	aabb_t test_aabb = {
-		.position = {global.render.width * 0.5, global.render.height * 0.5},
-		.half_size = {50, 50}
-	};
+	f32 width = global.render.width;
+	f32 height = global.render.height;
 	
-	aabb_t cursor_aabb = {.half_size = {75, 75}};
-	aabb_t sum_aabb = {.position = {test_aabb.position[0], test_aabb.position[1]}, .half_size = {test_aabb.half_size[0] + cursor_aabb.half_size[0], test_aabb.half_size[1] + cursor_aabb.half_size[1]}};
+	u32 static_body_a_id = physics_static_body_create((vec2){width * 0.5 - 25, height - 25}, (vec2){width - 50, 50});
+	u32 static_body_b_id = physics_static_body_create((vec2){width - 25, height * 0.5 + 25}, (vec2){50, height - 50});
+	u32 static_body_c_id = physics_static_body_create((vec2){width * 0.5 + 25, 25}, (vec2){width - 50, 50});
+	u32 static_body_d_id = physics_static_body_create((vec2){25, height * 0.5 - 25}, (vec2){50, height - 50});
+	u32 static_body_e_id = physics_static_body_create((vec2){width * 0.5, height * 0.5}, (vec2){150, 150});
 	
 	while(running) {
 		
@@ -67,41 +77,27 @@ int32_t main(int32_t argc, char **argv) {
 			
 		}
 		
+		body_t *body_player = physics_body_get(body_id);
+		
+		static_body_t *static_body_a = physics_static_body_get(static_body_a_id);
+		static_body_t *static_body_b = physics_static_body_get(static_body_b_id);
+		static_body_t *static_body_c = physics_static_body_get(static_body_c_id);
+		static_body_t *static_body_d = physics_static_body_get(static_body_d_id);
+		static_body_t *static_body_e = physics_static_body_get(static_body_e_id);
+		
 		input_update();
-		input_handle();
+		input_handle(body_player);
 		physics_update();
 		
 		render_begin();
-	
-		cursor_aabb.position[0] = pos[0];
-		cursor_aabb.position[1] = pos[1];
 		
-		render_aabb((f32 *)&test_aabb, WHITE);
-		render_aabb((f32 *)&sum_aabb, (vec4){1, 1, 1, 0.5});
+		render_aabb((f32 *)static_body_a, WHITE);
+		render_aabb((f32 *)static_body_b, WHITE);
+		render_aabb((f32 *)static_body_c, WHITE);
+		render_aabb((f32 *)static_body_d, WHITE);
+		render_aabb((f32 *)static_body_e, WHITE);
 		
-		aabb_t minkowski_difference = aabb_minkowski_difference(test_aabb, cursor_aabb);
-		render_aabb((f32 *)&minkowski_difference, ORANGE);
-		
-		vec2 pv;
-		aabb_penetration_vector(pv, minkowski_difference);
-		
-		aabb_t collision_aabb = cursor_aabb;
-		collision_aabb.position[0] += pv[0];
-		collision_aabb.position[1] += pv[1];
-		
-		if(physics_aabb_intersect_aabb(test_aabb, cursor_aabb)) {
-			render_aabb((f32 *)&cursor_aabb, RED);
-			render_aabb((f32 *)&collision_aabb, CYAN);
-			
-			vec2_add(pv, pos, pv);
-			render_line_segment(pos, pv, CYAN);
-			
-		}
-		else {
-			render_aabb((f32 *)&cursor_aabb, WHITE);
-		}
-		
-		render_quad(pos, (vec2){5, 5}, (physics_point_intersect_aabb(pos, test_aabb) ? RED : WHITE));
+		render_aabb((f32 *)body_player, CYAN);
 		
 		render_end();		
 		time_update_late();
