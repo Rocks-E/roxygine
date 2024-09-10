@@ -6,7 +6,8 @@ SET time=src\engine\time\time.c
 SET ds=src\engine\data_structures
 SET array_list=%ds%\array_list.c
 SET physics=src\engine\physics\physics.c
-SET modules=%render% %io% %config% %input% %time% %array_list% %physics%
+SET entity=src\engine\entity\entity.c
+SET modules=%render% %io% %config% %input% %time% %array_list% %physics% %entity%
 SET files=src\glad.c src\main.c src\engine\global.c %modules%
 SET libs=..\lib\SDL2main.lib ..\lib\SDL2.lib
  

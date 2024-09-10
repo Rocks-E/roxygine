@@ -19,7 +19,31 @@ void physics_init(void) {
 	
 }
 
-static hit_t sweep_static_bodies(aabb_t aabb, vec2 velocity) {
+static void update_sweep_result(hit_t *result, size_t other_id, aabb_t a, aabb_t b, vec2 velocity, u8 a_collision_mask, u8 b_collision_layer) {
+	
+	if(!(a_collision_mask & b_collision_layer))
+		return;
+	
+	aabb_t sum_aabb = b;
+	vec2_add(sum_aabb.half_size, sum_aabb.half_size, a.half_size);
+	
+	hit_t hit = ray_intersect_aabb(a.position, velocity, sum_aabb);
+	if(!hit.is_hit)
+		return;
+	
+	if(hit.time < result->time)
+		*result = hit;
+	else if(hit.time == result->time)
+		if((fabsf(velocity[0]) > fabsf(velocity[1])) && hit.normal[0])
+			*result = hit;
+		else if((fabsf(velocity[0]) < fabsf(velocity[1])) && hit.normal[1])
+			*result = hit;
+		
+	result->other_id = other_id;
+	
+}
+
+static hit_t sweep_static_bodies(body_t *body, vec2 velocity) {
 	
 	hit_t result = {.time = 0xFFFF};
 	
@@ -27,20 +51,26 @@ static hit_t sweep_static_bodies(aabb_t aabb, vec2 velocity) {
 		
 		static_body_t *static_body_cursor = physics_static_body_get(c);
 		
-		aabb_t sum_aabb = static_body_cursor->aabb;
-		vec2_add(sum_aabb.half_size, sum_aabb.half_size, aabb.half_size);
+		update_sweep_result(&result, c, body->aabb, static_body_cursor->aabb, velocity, body->collision_mask, static_body_cursor->collision_layer);
 		
-		hit_t hit = ray_intersect_aabb(aabb.position, velocity, sum_aabb);
-		if(!hit.is_hit)
+	}
+	
+	return result;
+	
+}
+
+static hit_t sweep_bodies(body_t *body, vec2 velocity) {
+	
+	hit_t result = {.time = 0xFFFF};
+	
+	for(u32 c = 0; c < phys_state.body_list->length; c++) {
+		
+		body_t *body_cursor = physics_body_get(c);
+		
+		if(body == body_cursor)
 			continue;
 		
-		if(hit.time < result.time)
-			result = hit;
-		else if(hit.time == result.time)
-			if((fabsf(velocity[0]) > fabsf(velocity[1])) && hit.normal[0])
-				result = hit;
-			else if((fabsf(velocity[0]) < fabsf(velocity[1])) && hit.normal[1])
-				result = hit;
+		update_sweep_result(&result, c, body->aabb, body_cursor->aabb, velocity, body->collision_mask, body_cursor->collision_layer);
 		
 	}
 	
@@ -50,25 +80,32 @@ static hit_t sweep_static_bodies(aabb_t aabb, vec2 velocity) {
 
 static void sweep_response(body_t *body, vec2 velocity) {
 	
-	hit_t hit = sweep_static_bodies(body->aabb, velocity);
+	hit_t hit_static = sweep_static_bodies(body, velocity);
+	hit_t hit = sweep_bodies(body, velocity);
 	
-	if(hit.is_hit) {
+	if(hit.is_hit && body->on_hit)
+		body->on_hit(body, physics_body_get(hit.other_id), hit);
+	
+	if(hit_static.is_hit) {
 		
-		body->aabb.position[0] = hit.position[0];
-		body->aabb.position[1] = hit.position[1];
+		body->aabb.position[0] = hit_static.position[0];
+		body->aabb.position[1] = hit_static.position[1];
 		
-		if(hit.normal[0]) {
+		if(hit_static.normal[0]) {
 			
 			body->velocity[0] = 0;
 			body->aabb.position[1] += velocity[1];
 			
 		}
-		else if(hit.normal[1]) {
+		else if(hit_static.normal[1]) {
 			
 			body->aabb.position[0] += velocity[0];
 			body->velocity[1] = 0;
 			
 		}
+		
+		if(body->on_hit_static)
+			body->on_hit_static(body, physics_static_body_get(hit_static.other_id), hit_static);
 		
 	}
 	else 
@@ -126,14 +163,18 @@ void physics_update(void) {
 	
 }
 
-size_t physics_body_create(vec2 position, vec2 size) {
+size_t physics_body_create(vec2 position, vec2 size, vec2 velocity, u8 collision_layer, u8 collision_mask, on_hit_f on_hit, on_hit_static_f on_hit_static) {
 	
 	body_t new_body = {
 		.aabb = {
 			.position = {position[0], position[1]},
 			.half_size = {size[0] * 0.5, size[1] * 0.5}
 		},
-		.velocity = {0, 0}
+		.velocity = {velocity[0], velocity[1]},
+		.collision_layer = collision_layer,
+		.collision_mask = collision_mask,
+		.on_hit = on_hit,
+		.on_hit_static = on_hit_static
 	};
 	
 	if(array_list_push(phys_state.body_list, &new_body) == (size_t)(-1))
@@ -154,13 +195,14 @@ void aabb_min_max(vec2 min, vec2 max, aabb_t aabb) {
 	
 }
 
-size_t physics_static_body_create(vec2 position, vec2 size) {
+size_t physics_static_body_create(vec2 position, vec2 size, u8 collision_layer) {
 	
 	static_body_t new_static_body = {
 		.aabb = {
 			.position = {position[0], position[1]},
 			.half_size = {size[0] * 0.5, size[1] * 0.5}
-		}
+		},
+		.collision_layer = collision_layer
 	};
 	
 	if(array_list_push(phys_state.static_body_list, &new_static_body) == (size_t)(-1))
